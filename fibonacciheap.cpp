@@ -43,7 +43,7 @@ NodoB *FibonacciHeap::findMin(NodoB &aNode)
 
 
     ith = &aNode;
-
+    minTemp = &aNode;
     do{
         if(ith->key<min){
             //min = ith->key;
@@ -101,14 +101,17 @@ void FibonacciHeap::link(FibonacciHeap &fh, NodoB &a, NodoB &b) //y,x
     a.siblingIzq = &a;
 
     if(b.child){
-        b.child->siblingDer->siblingIzq = &a;
+        //b.child->siblingDer->siblingIzq = &a; //observacion
+        b.child->siblingIzq->siblingDer = &a;
         a.siblingDer = b.child;
-        a.siblingIzq=b.child->siblingDer;
+        a.siblingIzq = b.child->siblingIzq;
+
+
+        //a.siblingIzq=b.child->siblingDer;
+
         b.child->siblingIzq = &a;
+        //b.child->siblingIzq->siblingDer=&a;
     }
-
-
-
     b.child = &a;
 
     b.degree ++;
@@ -135,28 +138,44 @@ void FibonacciHeap::consolidate(FibonacciHeap &fh)
             NodoB *y = a.at(grade); //null
 
             if(x->key > y->key){
-                link(fh,*x,*y);
-                x=x->parent;
-                current =x;
-            }
-            else{
+                if(y->key==8 && x->key==15){
+                       qDebug()<<":D";
+                       exchange(*x,*y);
+                }
+
                 link(fh,*y,*x);
-                x=x->parent; //actualizamos para q x se quede arriba
-                current =x;
+
+//                if(fh.min == x){
+//                    fh.min = y;
+//                }
+                //x=x->parent;
+                //current =x;
             }
+//            else{
+//                link(fh,*y,*x); //segundo(x) es el menor
+//                //x=x->parent; //actualizamos para q x se quede arriba
+//                //current =x;
+//                if(fh.min == y){
+//                    fh.min = x;
+//                }
+//            }
             a.at(grade) = NULL;
             grade++;
-            if(grade>a.size()-1)
+            if(grade>a.size()-1)//mmm
                 break;
 
         }
-        //if(!grade>a.size())
+        if(grade<a.size())
             a.at(grade) = x;
 
         current=current->siblingDer;
 
 
     }while(current!=fh.min);
+
+
+    fh.min = findMin(*fh.min);
+    qDebug()<<"xD";
 
 //    while(current!=fh.min){
 //        NodoB *x=current; //w es current
@@ -204,29 +223,56 @@ NodoB *FibonacciHeap::extractMin(FibonacciHeap *fh)
 {
     NodoB *z = fh->min;
     if(z!=NULL){
-        NodoB *x=z->child;
-        do{
-            z->siblingIzq->siblingDer=x;
-            x->siblingIzq->siblingDer=z->siblingDer;
-            z->siblingDer->siblingDer=z->siblingIzq;
-            x->siblingIzq = z->siblingIzq;
-            x->parent = NULL;
+        if(z->child){
+            NodoB *x=z->child->siblingDer;
 
-//            z->siblingDer=z;
-//            z->siblingIzq=z;
+            do{
+                z->siblingIzq->siblingDer=x;
+                x->siblingIzq->siblingDer=z->siblingDer;
+                //z->siblingDer->siblingDer=z->siblingIzq;
+                z->siblingDer->siblingIzq=x;
 
-//            if(z == z->siblingDer){
-//                fh->min=findMin(fh->min); //actualizamos el minimo
-//            }else{
-//                fh->min=findMin(fh->min); //actualizamos el minimo
-//            }
-            fh->min=findMin(*fh->min); //actualizamos el minimo
+                x->siblingIzq = z->siblingIzq;
+                x->parent = NULL;
+
+
+                x=x->siblingDer;
+                qDebug()<<"xD";
+
+            }while(x->parent == z);
+
+        }
+        else{
+            z->siblingIzq->siblingDer=z->siblingDer;
+            z->siblingDer->siblingIzq=z->siblingIzq;
+        }
+
+
+        if(z==z->siblingDer)
+            fh->min = NULL;
+        else{
+            fh->min=z->siblingDer;
             consolidate(*fh);
-
-            x=x->siblingDer;
-
-        }while(x!=z->child);
+        }
         this->nodes--;
     }
     return z;
+}
+
+void FibonacciHeap::exchange(NodoB &x, NodoB &y)
+{
+    NodoB *tempNext = x.siblingDer;
+    NodoB *tempPrev = x.siblingIzq;
+
+    x.siblingDer=y.siblingDer;
+    y.siblingIzq->siblingDer = &x;
+    x.siblingIzq = y.siblingIzq;
+    tempNext->siblingIzq = &y;
+    y.siblingDer = tempNext;
+    tempPrev->siblingDer=&y;
+    y.siblingIzq=tempPrev;
+
+    tempPrev->siblingIzq=&x;
+
+
 }

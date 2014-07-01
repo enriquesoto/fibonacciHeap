@@ -24,6 +24,7 @@ public:
     //list<NodoB*> heap;
     NodoB *head;
     NodoB *extractMin(FibonacciHeap *fh);
+    void exchange(NodoB &x,NodoB &y);
 };
 
 #endif // FIBONACCIHEAP_H
