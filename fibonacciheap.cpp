@@ -310,11 +310,12 @@ void FibonacciHeap::cut(FibonacciHeap &fh, NodoB &x,NodoB &y)
 {
     NodoB *tempPrevX=x.siblingIzq;
     NodoB *tempNextX =x.siblingDer;
-    x.siblingDer=x;
-    x.siblingIzq=x;
+    x.siblingDer=&x;
+    x.siblingIzq=&x;
     tempPrevX->siblingDer=tempNextX;
     tempNextX->siblingIzq=tempPrevX;
-    insert(&fh,&x);
+    x.parent = NULL;
+    insert(fh,&x);
 }
 
 void FibonacciHeap::cascadingCut(FibonacciHeap &fh, NodoB &y)
@@ -325,28 +326,124 @@ void FibonacciHeap::cascadingCut(FibonacciHeap &fh, NodoB &y)
             y.marked = true;
         }
         else{
-            cut(&fh,&y,&z);
-            cascadingCut(&fh,&z);
+            cut(fh,y,*z);
+            cascadingCut(fh,*z);
         }
     }
 }
 
-void FibonacciHeap::decreaseKey(FibonacciHeap &fh, NodoB &x, NodoB &k)
+void FibonacciHeap::decreaseKey(FibonacciHeap &fh, NodoB &x, int k)
 {
     NodoB * y;
-    if(k.key>x.key){
+
+    if(k>x.key){
            qDebug()<<"error";
            return;
     }
-    x.key = k.key;
+    x.key = k;
     y=x.parent;
     if(y!=NULL && x.key < y->key){
-        cut(&fh,x,y);
-        cascadingCut(&fh,y);
+        cut(fh,x,*y);
+        cascadingCut(fh,*y);
     }
     if(x.key < fh.min->key){
-        fh.min = x;
+        fh.min = &x;
     }
     return;
+
+}
+
+NodoB *FibonacciHeap::bfs(NodoB &b, int value)
+{
+    //NodoB *x=b.pChild.begin();
+    NodoB *result=NULL;
+    if(b.key == value) //preorder operation
+        return &b;
+
+        NodoB *child= b.child;
+
+        if(!child) return NULL;
+
+        do{
+            result = bfs(*child,value);
+            if(result) return result;
+            child=child->siblingDer;
+        }while(child != b.child);
+
+
+    return result;
+
+}
+
+NodoB *FibonacciHeap::findNode(NodoB &b, int value)
+{
+    NodoB *currentNode = &b;
+    NodoB *result=NULL;
+    do{
+        if(currentNode->key == value)
+            return currentNode;
+
+        result = bfs(*currentNode,value);
+//        NodoB *child= currentNode->child;
+//        do{
+//            bfs(*child,value);
+//            child=child->siblingDer;
+//        }while(child == b.child);
+
+        currentNode = currentNode->siblingDer;
+    }while(currentNode!=&b);
+
+    return result;
+}
+
+NodoB *FibonacciHeap::deleteNode(FibonacciHeap &fh, int target)
+{
+    NodoB *foundNode = findNode(*fh.min,target);
+    decreaseKey(fh,*foundNode,-INT_MAX);
+    extractMin(&fh);
+}
+
+void FibonacciHeap::fibonacciHeap2file(FibonacciHeap &fh)
+{
+
+    file = new QFile("out.dot");
+    file->open(QIODevice::WriteOnly | QIODevice::Text);
+    out = new QTextStream(file);
+
+    *out<<"digraph G { "<<endl;
+
+    NodoB *currentNode = fh.min;
+    //NodoB *result=NULL;
+    do{
+        if(currentNode->siblingDer){
+            *out<<"\"\\"<<currentNode<<"\" [label = \""<<currentNode->key<<"\"] "<<endl;
+            *out<<"\"\\"<<currentNode->siblingDer<< "\" [ label=\""<<currentNode->siblingDer->key<<"\"] ;" <<endl ;
+            *out<<"\"\\"<<currentNode<<"\""<<" -> \"\\"<<currentNode->siblingDer<< "\" [constraint=false] "<<endl ;
+        }
+
+
+        if(currentNode->siblingIzq){
+            *out<<"\"\\"<<currentNode<<"\" [label = \""<<currentNode->key<<"\"] "<<endl;
+            *out<<"\"\\"<<currentNode->siblingIzq<< "\" [ label=\""<<currentNode->siblingIzq->key<<"\"] ;"<<endl;
+            *out<<"\"\\"<<currentNode<<"\""<<" -> \"\\"<<currentNode->siblingIzq<< "\" [constraint=false] "<<endl ;
+        }
+        if(currentNode->child){
+            *out<<"\"\\"<<currentNode->child<<"\" [label = \""<<currentNode->child->key<<"\"] "<<endl;
+            *out<<"\"\\"<<currentNode->child<<"\" [label=\""<<currentNode->child->key<<"\" ]"<<endl;
+        }
+
+
+       // bfsPrint(*currentNode,value);
+//        NodoB *child= currentNode->child;
+//        do{
+//            bfs(*child,value);
+//            child=child->siblingDer;
+//        }while(child == b.child);
+
+        currentNode = currentNode->siblingDer;
+    }while(currentNode!=fh.min);
+
+    *out<<"} "<<endl;
+    file->close();
 
 }

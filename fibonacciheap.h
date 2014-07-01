@@ -6,6 +6,7 @@
 #include <cmath>
 #include <list>
 #include <vector>
+#include <QFile>
 
 using namespace std;
 
@@ -27,7 +28,18 @@ public:
     void exchange(NodoB &x,NodoB &y);
     void cut(FibonacciHeap &fh,NodoB &x, NodoB &y);
     void cascadingCut(FibonacciHeap &fh,NodoB &y);
-    void decreaseKey(FibonacciHeap &fh,NodoB &x,NodoB &k);
+    void decreaseKey(FibonacciHeap &fh,NodoB &x,int k);
+    NodoB *bfs(NodoB &b, int value);
+    NodoB *findNode(NodoB &b,int value);
+    NodoB *deleteNode(FibonacciHeap &fh,int target);
+
+    void fibonacciHeap2file(FibonacciHeap &bh);
+    void bfsPrint(NodoB &aNode);
+
+    QFile *file;
+    QTextStream *out;
+
+
 };
 
 #endif // FIBONACCIHEAP_H

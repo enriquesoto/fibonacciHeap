@@ -50,6 +50,15 @@ int main(int argc, char *argv[])
     //fh1->consolidate(*fh1);
     fh->extractMin(fh);
 
+    NodoB *resultmin = fh->findNode(*fh->min,9);
+
+    fh->decreaseKey(*fh,*resultmin,4);
+
+    fh->fibonacciHeap2file(*fh);
+    //fh->deleteNode(*fh,15);
+
+    //fh->fibonacciHeap2file();
+
    // int grado = fh1->getDegree(14);
 
 
