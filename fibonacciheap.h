@@ -25,6 +25,9 @@ public:
     NodoB *head;
     NodoB *extractMin(FibonacciHeap *fh);
     void exchange(NodoB &x,NodoB &y);
+    void cut(FibonacciHeap &fh,NodoB &x, NodoB &y);
+    void cascadingCut(FibonacciHeap &fh,NodoB &y);
+    void decreaseKey(FibonacciHeap &fh,NodoB &x,NodoB &k);
 };
 
 #endif // FIBONACCIHEAP_H

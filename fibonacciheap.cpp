@@ -13,6 +13,7 @@ void FibonacciHeap::insert(FibonacciHeap &fh, NodoB *aNode)
         //fh.heap.push_front(aNode);
         this->min = aNode;
         //fh.head = aNode;
+        this->nodes = this->nodes + 1;
         return;
     }
     else {
@@ -128,6 +129,7 @@ void FibonacciHeap::consolidate(FibonacciHeap &fh)
         a.at(i) = NULL;
     }
     NodoB *current = fh.min;
+    NodoB *tempExchange;
 
     do{
         NodoB *x=current; //w es current
@@ -140,10 +142,15 @@ void FibonacciHeap::consolidate(FibonacciHeap &fh)
             if(x->key > y->key){
                 if(y->key==8 && x->key==15){
                        qDebug()<<":D";
-                       exchange(*x,*y);
-                }
 
-                link(fh,*y,*x);
+                }
+                if(y->child == fh.min)
+                    fh.min = y;
+                exchange(*x,*y);
+                tempExchange=x;
+                x=y;
+                y=tempExchange;
+                current =x;
 
 //                if(fh.min == x){
 //                    fh.min = y;
@@ -151,6 +158,8 @@ void FibonacciHeap::consolidate(FibonacciHeap &fh)
                 //x=x->parent;
                 //current =x;
             }
+
+            link(fh,*y,*x);
 //            else{
 //                link(fh,*y,*x); //segundo(x) es el menor
 //                //x=x->parent; //actualizamos para q x se quede arriba
@@ -159,6 +168,8 @@ void FibonacciHeap::consolidate(FibonacciHeap &fh)
 //                    fh.min = x;
 //                }
 //            }
+            if(x->child == fh.min)
+                fh.min = x;
             a.at(grade) = NULL;
             grade++;
             if(grade>a.size()-1)//mmm
@@ -264,6 +275,24 @@ void FibonacciHeap::exchange(NodoB &x, NodoB &y)
     NodoB *tempNext = x.siblingDer;
     NodoB *tempPrev = x.siblingIzq;
 
+    if(x.siblingDer == &y || x.siblingIzq == &y){
+//        y.siblingDer = y.siblingIzq;
+//        x.siblingDer  = tempPrev;
+//        tempPrev->siblingIzq = x;
+//        tempNext->siblingIzq = tempPrev;
+
+        //
+
+        tempPrev->siblingDer = tempNext;
+        tempNext->siblingIzq=tempPrev;
+        tempPrev->siblingIzq= &x;
+        x.siblingDer = tempPrev;
+        x.siblingIzq=tempNext;
+        tempNext->siblingDer = &x;
+        return ;
+
+    }
+
     x.siblingDer=y.siblingDer;
     y.siblingIzq->siblingDer = &x;
     x.siblingIzq = y.siblingIzq;
@@ -274,5 +303,50 @@ void FibonacciHeap::exchange(NodoB &x, NodoB &y)
 
     tempPrev->siblingIzq=&x;
 
+
+}
+
+void FibonacciHeap::cut(FibonacciHeap &fh, NodoB &x,NodoB &y)
+{
+    NodoB *tempPrevX=x.siblingIzq;
+    NodoB *tempNextX =x.siblingDer;
+    x.siblingDer=x;
+    x.siblingIzq=x;
+    tempPrevX->siblingDer=tempNextX;
+    tempNextX->siblingIzq=tempPrevX;
+    insert(&fh,&x);
+}
+
+void FibonacciHeap::cascadingCut(FibonacciHeap &fh, NodoB &y)
+{
+    NodoB *z = y.parent;
+    if(z){
+        if(!y.marked){
+            y.marked = true;
+        }
+        else{
+            cut(&fh,&y,&z);
+            cascadingCut(&fh,&z);
+        }
+    }
+}
+
+void FibonacciHeap::decreaseKey(FibonacciHeap &fh, NodoB &x, NodoB &k)
+{
+    NodoB * y;
+    if(k.key>x.key){
+           qDebug()<<"error";
+           return;
+    }
+    x.key = k.key;
+    y=x.parent;
+    if(y!=NULL && x.key < y->key){
+        cut(&fh,x,y);
+        cascadingCut(&fh,y);
+    }
+    if(x.key < fh.min->key){
+        fh.min = x;
+    }
+    return;
 
 }
